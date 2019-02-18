@@ -1,12 +1,12 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.1 ###
+### v0.2 ###
 
 __usage__ = """
 					python MGSE.py
 					--cov <FULL_PATH_TO_COVERAGE_FILE_OR_FOLDER>
 					--out <FULL_PATH_TO_OUTPUT_DIRECTORY>
-					--ref | --gff <FULL_PATH_TO_REF_GENE_FILE_OR_GFF3_FILE>
+					--ref | --gff <FULL_PATH_TO_REF_GENE_FILE_OR_GFF3_FILE> | --busco <FULL_PATH_TO 'full_table_busco_run.tsv'>
 					
 					optional:
 					--black <FULL_PATh_TO_FILE_WITH_CONTIG_NAMES_FOR_EXCLUSION>
@@ -99,6 +99,7 @@ def get_avg_cov( coverage, genes, output_folder ):
 		ax.set_ylabel( "read coverage depth" )
 		ax.set_title( "n (positions) = " + str( len( values ) ) )
 		fig.savefig( output_folder + "avg_cov.png", dpi=600 )
+		plt.close("all")
 	except:
 		pass
 	
@@ -159,7 +160,7 @@ def construct_ref_gene_file( gff, ref_gene_file, feature_type="gene" ):
 					try:
 						ID = re.findall( "g\d+", parts[-1] )[0]
 						genes.append( { 'chr': parts[0], 'start': parts[3], 'end': parts[4], 'ID': ID } )
-					except:
+					except IndexError:
 						genes.append( { 'chr': parts[0], 'start': parts[3], 'end': parts[4], 'ID': "n/a" } )
 			line = f.readline()
 	
@@ -167,6 +168,50 @@ def construct_ref_gene_file( gff, ref_gene_file, feature_type="gene" ):
 	with open( ref_gene_file, "w" ) as out:
 		for gene in genes:
 			out.write( "\t".join( map( str, [ gene['chr'], gene['start'], gene['end'], gene['ID'] ] ) ) + '\n' )
+
+
+def construct_ref_gene_file_from_busco( gff_folder, busco_genes, ref_gene_file, feature_type ):
+	"""! @brief construct ref gene file from BUSCO GFFs """
+	
+	gff_files = glob.glob( gff_folder + "*.gff" )
+	genes = []
+	for filename in gff_files:
+		if filename.split('/')[-1].split('.')[0] in busco_genes:
+			with open( filename, "r" ) as f:
+				line  = f.readline()
+				while line:
+					if line[0] != "#":
+						parts = line.strip().split('\t')
+						if parts[2] == feature_type:
+							try:
+								ID = re.findall( "g\d+", parts[-1] )[0]
+								genes.append( { 'chr': parts[0], 'start': parts[3], 'end': parts[4], 'ID': ID } )
+							except IndexError:
+								genes.append( { 'chr': parts[0], 'start': parts[3], 'end': parts[4], 'ID': "n/a" } )
+					line = f.readline()
+	
+	# --- construct file with reference regions --- #
+	with open( ref_gene_file, "w" ) as out:
+		for gene in genes:
+			out.write( "\t".join( map( str, [ gene['chr'], gene['start'], gene['end'], gene['ID'] ] ) ) + '\n' )
+
+
+def load_BUSCOs( busco_file ):
+	"""! @brief load genes """
+	
+	genes = {}
+	with open( busco_file, "r" ) as f:
+		line = f.readline()
+		while line:
+			if line[0] != '#':
+				parts = line.strip().split('\t')
+				try:
+					if parts[1] == "Complete":
+						genes.update( { parts[0]: None } )
+				except IndexError:
+					pass
+			line = f.readline()
+	return genes
 
 
 def main( arguments ):
@@ -184,12 +229,25 @@ def main( arguments ):
 	if not os.path.exists( prefix ):
 		os.makedirs( prefix )
 	
+	if '--feature' in arguments:
+		feature_type = arguments[ arguments.index( '--feature' )+1 ]
+	else:
+		feature_type = "gene"
+	
 	if '--ref' in arguments:
 		ref_gene_file = arguments[ arguments.index( '--ref' ) + 1 ]
 	else:
 		ref_gene_file = prefix + "ref_genes.txt"
-		gff = arguments[ arguments.index( '--gff' ) + 1 ]
-		construct_ref_gene_file( gff, ref_gene_file )
+		if '--gff' in arguments:
+			gff = arguments[ arguments.index( '--gff' ) + 1 ]
+			construct_ref_gene_file( gff, ref_gene_file, feature_type )
+		elif '--busco' in arguments:
+			busco_file = arguments[ arguments.index( '--busco' ) + 1 ]
+			gff_folder = "/".join( busco_file.split('/')[:-1] ) + "/augustus_output/gffs/"
+			busco_genes = load_BUSCOs( busco_file )
+			construct_ref_gene_file_from_busco( gff_folder, busco_genes, ref_gene_file, feature_type )
+		else:
+			sys.exit( __usage__ )
 	
 	if '--black' in arguments:
 		black_list_file = arguments[ arguments.index( '--black' )+1 ]
@@ -201,6 +259,7 @@ def main( arguments ):
 				line = f.readline()
 	else:
 		blacklist = []
+	
 	
 	report_file = prefix + "report.txt"	#integrate date and time of run
 	
@@ -226,17 +285,29 @@ def main( arguments ):
 			out.write( "total coverage (combined length of all mapped reads):\t" + str( total_cov ) + "\n" )
 			out.write( "total sequence length:\t" + str( total_len ) + "\n" )
 			
-			est_genome_size_med = total_cov / ( avg_coverage_median*1000000.0 )
-			est_genome_size_mean = total_cov / ( avg_coverage_mean*1000000.0 )
+			try:
+				est_genome_size_med = total_cov / ( avg_coverage_median*1000000.0 )
+			except ZeroDivisionError:
+				est_genome_size_med = 0
+			try:
+				est_genome_size_mean = total_cov / ( avg_coverage_mean*1000000.0 )
+			except ZeroDivisionError:
+				est_genome_size_mean = 0
 			
-			cm_est_genome_size_med = cm_total_cov / ( avg_coverage_median*1000000.0 )
-			cm_est_genome_size_mean = cm_total_cov / ( avg_coverage_mean*1000000.0 )
+			try:
+				cm_est_genome_size_med = cm_total_cov / ( avg_coverage_median*1000000.0 )
+			except ZeroDivisionError:
+				cm_est_genome_size_med = 0
+			try:
+				cm_est_genome_size_mean = cm_total_cov / ( avg_coverage_mean*1000000.0 )
+			except ZeroDivisionError:
+				cm_est_genome_size_mean = 0
 			
 			out.write( "estimated genome size based on mean [Mbp]:\t" + str( est_genome_size_mean )  + "\n" )
 			out.write( "estimated genome size based on median [Mbp]:\t" + str( est_genome_size_med ) + "\n" )
 			
-			out.write( "estimated genome size based on mean [Mbp] (+chloro +mito):\t" + str( cm_est_genome_size_mean ) + "\n" )
-			out.write( "estimated genome size based on median [Mbp] (+chloro +mito):\t" + str( cm_est_genome_size_med ) + "\n" )
+			#out.write( "estimated genome size based on mean [Mbp] (+chloro +mito):\t" + str( cm_est_genome_size_mean ) + "\n" )
+			#out.write( "estimated genome size based on median [Mbp] (+chloro +mito):\t" + str( cm_est_genome_size_med ) + "\n" )
 
 
 if '--cov' in sys.argv and '--out' in sys.argv and '--ref' in sys.argv:
