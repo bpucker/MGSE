@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.2 ###
+### v0.4 ###
 
 __usage__ = """
 					python MGSE.py
@@ -10,7 +10,11 @@ __usage__ = """
 					
 					optional:
 					--black <FULL_PATh_TO_FILE_WITH_CONTIG_NAMES_FOR_EXCLUSION>
+					--gzip <ACITVATES_SEARCH_FOR_COMPRESSED_FILES>
 					
+					WARNING: if --busco is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
+					
+					bug reports and feature requests: bpucker@cebitec.uni-bielefel.de					
 					"""
 
 import os, glob, sys
@@ -20,6 +24,11 @@ except ImportError:
 	pass
 try:
 	import matplotlib.pyplot as plt	#import of matplotlib is optional to avoid unnessecary dependencies
+except ImportError:
+	pass
+
+try:
+	import gzip
 except ImportError:
 	pass
 
@@ -49,21 +58,39 @@ def get_median( values ):
 def load_coverage( cov_file ):
 	"""! @brief load coverage from given file """
 	
-	coverage = {}
-	with open( cov_file, "r" ) as f:
-		line = f.readline()
-		prev_chr = line.split('\t')[0]
-		cov = []
-		while line:
-			parts = line.strip().split('\t')
-			if parts[0] != prev_chr:
-				coverage.update( { prev_chr: cov } )
-				prev_chr = parts[0]
-				cov = []
-			cov.append( float( parts[2] ) )
+	if cov_file[-3:].lower() == "cov":	#uncompressed coverage file
+		coverage = {}
+		with open( cov_file, "r" ) as f:
 			line = f.readline()
-		coverage.update( { prev_chr: cov } )
-	return coverage
+			prev_chr = line.split('\t')[0]
+			cov = []
+			while line:
+				parts = line.strip().split('\t')
+				if parts[0] != prev_chr:
+					coverage.update( { prev_chr: cov } )
+					prev_chr = parts[0]
+					cov = []
+				cov.append( float( parts[2] ) )
+				line = f.readline()
+			coverage.update( { prev_chr: cov } )
+		return coverage
+	
+	else:	#compressed coverage file
+		coverage = {}
+		with gzip.open( cov_file, "rb" ) as f:
+			line = f.readline()
+			prev_chr = line.split('\t')[0]
+			cov = []
+			while line:
+				parts = line.strip().split('\t')
+				if parts[0] != prev_chr:
+					coverage.update( { prev_chr: cov } )
+					prev_chr = parts[0]
+					cov = []
+				cov.append( float( parts[2] ) )
+				line = f.readline()
+			coverage.update( { prev_chr: cov } )
+		return coverage
 
 
 def load_gene_positions( ref_gene_file ):
@@ -220,6 +247,8 @@ def main( arguments ):
 	input_cov = arguments[ arguments.index( '--cov' )+1 ]	#can be file or directory with files!
 	if input_cov[-1] == "/":
 		cov_files = sorted( glob.glob( input_cov + "*.cov" ) )
+		if '--gzip' in arguments:
+			cov_files += sorted( glob.glob( input_cov + "*.cov.gz" ) )
 	else:
 		cov_files = [ input_cov ]
 	
@@ -313,6 +342,8 @@ def main( arguments ):
 if '--cov' in sys.argv and '--out' in sys.argv and '--ref' in sys.argv:
 	main( sys.argv )
 elif '--cov' in sys.argv and '--out' in sys.argv and '--gff' in sys.argv:
+	main( sys.argv )
+elif '--cov' in sys.argv and '--out' in sys.argv and '--busco' in sys.argv:
 	main( sys.argv )
 else:
 	sys.exit( __usage__ )
