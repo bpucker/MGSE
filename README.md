@@ -16,6 +16,17 @@ optional: \
 WARNING: if --busco is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 
 
+Possible reference regions:
+
+1) --ref = A very simple TAB-separated text file with information about chromosome, start, and end of regions which should be used as a reference set for the coverage calculation.
+
+2) --gff = A GFF3 file with genes which should serve as reference regions.
+
+3) --busco = This will extract the single copy BUSCOs from the provided TSV file and retrieves the corresponding annotation from GFF3 files generated while running BUSCO.
+
+
+
+
 
 # python construct_cov_file.py \
 --in <BAM_FILE> \
