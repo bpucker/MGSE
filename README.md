@@ -36,3 +36,10 @@ python construct_cov_file.py \
 --bam_is_sorted <PREVENTS_EXTRA_SORTING_OF_BAM_FILE>
 
 
+
+
+
+Reference:
+
+Pucker B. Mapping-based genome size estimation. Boas Pucker. bioRxiv 607390; doi: https://doi.org/10.1101/607390
+
