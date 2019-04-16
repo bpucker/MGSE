@@ -43,5 +43,5 @@ python construct_cov_file.py \
 
 ## Reference:
 
-Pucker B. Mapping-based genome size estimation. Boas Pucker. bioRxiv 607390; doi: https://doi.org/10.1101/607390
+Pucker B. Mapping-based genome size estimation. bioRxiv 607390; doi: https://doi.org/10.1101/607390
 
