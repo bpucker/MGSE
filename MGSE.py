@@ -14,7 +14,7 @@ __usage__ = """
 					
 					WARNING: if --busco is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 					
-					bug reports and feature requests: bpucker@cebitec.uni-bielefel.de					
+					bug reports and feature requests: bpucker@cebitec.uni-bielefeld.de					
 					"""
 
 import os, glob, sys
