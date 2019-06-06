@@ -1,18 +1,23 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.4 ###
+### v0.45 ###
 
 __usage__ = """
 					python MGSE.py
-					--cov <FULL_PATH_TO_COVERAGE_FILE_OR_FOLDER>
+					--cov <FULL_PATH_TO_COVERAGE_FILE_OR_FOLDER>| --bam <FULL_PATH_TO_BAM_FILE>
 					--out <FULL_PATH_TO_OUTPUT_DIRECTORY>
-					--ref | --gff <FULL_PATH_TO_REF_GENE_FILE_OR_GFF3_FILE> | --busco <FULL_PATH_TO 'full_table_busco_run.tsv'>
+					--ref | --gff <FULL_PATH_TO_REF_GENE_FILE_OR_GFF3_FILE> | --busco <FULL_PATH_TO 'full_table_busco_run.tsv'> | --all <ALL_POS_USED_FOR_CALCULATION>
 					
 					optional:
-					--black <FULL_PATh_TO_FILE_WITH_CONTIG_NAMES_FOR_EXCLUSION>
+					--black <FULL_PATH_TO_FILE_WITH_CONTIG_NAMES_FOR_EXCLUSION>
 					--gzip <ACITVATES_SEARCH_FOR_COMPRESSED_FILES>
-					
+					--bam_is_sorted PREVENTS_SORTING_OF_BAM_FILE
+					--samtools <FULL_PATH_TO_SAMTOOLS>
+					--bedtools <FULL_PATH_TO_BEDTOOLS>
+					--name <NAME_OF_CURRENCT_ANALYSIS>
+										
 					WARNING: if --busco is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
+					WARNING: use of absolute paths is required
 					
 					bug reports and feature requests: bpucker@cebitec.uni-bielefeld.de					
 					"""
@@ -241,16 +246,22 @@ def load_BUSCOs( busco_file ):
 	return genes
 
 
+def construct_cov_file( bam_file, sorted_bam_file, cov_file, m, t, samtools, bedtools, sorting ):
+	"""! @brief generate COV file for given BAM file """
+	
+	if sorting:			
+		print "sorting BAM file ..."
+		cmd = samtools + " sort -m " + m + " --threads " + t + " " + bam_file + " > " + sorted_bam_file
+		os.popen( cmd )
+	
+	# --- calculate read coverage depth per position --- #
+	print "calculating coverage per position ...."
+	cmd = bedtools + " -d -split -ibam " + sorted_bam_file + " > " + cov_file
+	os.popen( cmd )
+
+
 def main( arguments ):
 	"""! @brief runs all parts of this script """
-	
-	input_cov = arguments[ arguments.index( '--cov' )+1 ]	#can be file or directory with files!
-	if input_cov[-1] == "/":
-		cov_files = sorted( glob.glob( input_cov + "*.cov" ) )
-		if '--gzip' in arguments:
-			cov_files += sorted( glob.glob( input_cov + "*.cov.gz" ) )
-	else:
-		cov_files = [ input_cov ]
 	
 	prefix = arguments[ arguments.index( '--out' )+1 ]
 	if prefix[-1] != "/":
@@ -258,11 +269,65 @@ def main( arguments ):
 	if not os.path.exists( prefix ):
 		os.makedirs( prefix )
 	
+	if '--name' in arguments:	#set name for current analysis
+		prefix = prefix + arguments[ arguments.index( '--name' )+1 ]
+	
+	# --- if coverage file or folder with coverage files is provided --- #
+	if '--cov' in arguments:
+		input_cov = arguments[ arguments.index( '--cov' )+1 ]	#can be file or directory with files!
+		if input_cov[-1] == "/":
+			cov_files = sorted( glob.glob( input_cov + "*.cov" ) )
+			if '--gzip' in arguments:
+				cov_files += sorted( glob.glob( input_cov + "*.cov.gz" ) )
+		else:
+			cov_files = [ input_cov ]
+	
+	# --- if BAM file or folder of BAM files is provided --- #
+	else:
+		input_bam = arguments[ arguments.index( '--bam' )+1 ]	#can be file or directory with files!
+		if input_bam[-1] == "/":
+			bam_files = sorted( glob.glob( input_cov + "*.bam" ) )
+		else:
+			bam_files = [ input_bam ]
+		
+		
+		if '--m' in arguments:
+			m = arguments[ arguments.index( '--m' )+1 ]
+		else:
+			m = "5000000000"
+		
+		if '--threads' in arguments:
+			t = arguments[ arguments.index( '--threads' )+1 ]
+		else:
+			t = "4"
+		
+		if '--samtools' in arguments:
+			samtools = arguments[ arguments.index( '--samtools' )+1 ]
+		else:
+			samtools = "samtools"
+		
+		if '--bedtools' in arguments:
+			bedtools = arguments[ arguments.index( '--bedtools' )+1 ]
+		else:
+			bedtools = "genomeCoverageBed"
+		
+		cov_files = []
+		for bam_file in bam_files:
+			cov_file = prefix + bam_file.split('/')[-1] + ".bam"
+			if '--bam_is_sorted' in arguments:
+				construct_cov_file( bam_file, bam_file, cov_file, m, t, samtools, bedtools, False )
+			else:
+				sorted_bam_file = prefix + bam_file.split('/')[-1] + "_sorted.bam"
+				construct_cov_file( bam_file, sorted_bam_file, cov_file, m, t, samtools, bedtools, True )
+		
+	
+	# ---- collect remaining MGSE options --- #
 	if '--feature' in arguments:
 		feature_type = arguments[ arguments.index( '--feature' )+1 ]
 	else:
 		feature_type = "gene"
 	
+	use_ref_genes = True
 	if '--ref' in arguments:
 		ref_gene_file = arguments[ arguments.index( '--ref' ) + 1 ]
 	else:
@@ -275,6 +340,8 @@ def main( arguments ):
 			gff_folder = "/".join( busco_file.split('/')[:-1] ) + "/augustus_output/gffs/"
 			busco_genes = load_BUSCOs( busco_file )
 			construct_ref_gene_file_from_busco( gff_folder, busco_genes, ref_gene_file, feature_type )
+		elif "--all" in arguments:
+			use_ref_genes = False
 		else:
 			sys.exit( __usage__ )
 	
@@ -293,7 +360,8 @@ def main( arguments ):
 	report_file = prefix + "report.txt"	#integrate date and time of run
 	
 	# --- run analyses --- #
-	genes = load_gene_positions( ref_gene_file )	#loading positions of reference genes
+	if use_ref_genes:
+		genes = load_gene_positions( ref_gene_file )	#loading positions of reference genes
 	
 	with open( report_file, "w" ) as out: 
 		for cov_file in cov_files:
@@ -305,7 +373,15 @@ def main( arguments ):
 			
 			coverage = load_coverage( cov_file )
 			
-			avg_coverage_median, avg_coverage_mean = get_avg_cov( coverage, genes, output_folder )
+			
+			if not use_ref_genes:	#calculation based on all positions
+				values = [ x for chromosome in coverage.values() for x in chromosome ]
+				avg_coverage_median = get_median( values )
+				avg_coverage_mean = get_mean( values )
+			else:	#calculation based on reference genes
+				avg_coverage_median, avg_coverage_mean = get_avg_cov( coverage, genes, output_folder )
+			
+			
 			out.write( "average coverage in reference regions (median):\t" + str( avg_coverage_median ) + "\n" )
 			out.write( "average coverage in reference regions (mean):\t" + str( avg_coverage_mean ) + "\n" )
 			
@@ -334,9 +410,6 @@ def main( arguments ):
 			
 			out.write( "estimated genome size based on mean [Mbp]:\t" + str( est_genome_size_mean )  + "\n" )
 			out.write( "estimated genome size based on median [Mbp]:\t" + str( est_genome_size_med ) + "\n" )
-			
-			#out.write( "estimated genome size based on mean [Mbp] (+chloro +mito):\t" + str( cm_est_genome_size_mean ) + "\n" )
-			#out.write( "estimated genome size based on median [Mbp] (+chloro +mito):\t" + str( cm_est_genome_size_med ) + "\n" )
 
 
 if '--cov' in sys.argv and '--out' in sys.argv and '--ref' in sys.argv:
@@ -344,6 +417,16 @@ if '--cov' in sys.argv and '--out' in sys.argv and '--ref' in sys.argv:
 elif '--cov' in sys.argv and '--out' in sys.argv and '--gff' in sys.argv:
 	main( sys.argv )
 elif '--cov' in sys.argv and '--out' in sys.argv and '--busco' in sys.argv:
+	main( sys.argv )
+elif '--cov' in sys.argv and '--out' in sys.argv and '--all' in sys.argv:
+	main( sys.argv )
+elif '--bam' in sys.argv and '--out' in sys.argv and '--ref' in sys.argv:
+	main( sys.argv )
+elif '--bam' in sys.argv and '--out' in sys.argv and '--gff' in sys.argv:
+	main( sys.argv )
+elif '--bam' in sys.argv and '--out' in sys.argv and '--busco' in sys.argv:
+	main( sys.argv )
+elif '--bam' in sys.argv and '--out' in sys.argv and '--all' in sys.argv:
 	main( sys.argv )
 else:
 	sys.exit( __usage__ )
