@@ -7,7 +7,7 @@ __usage__ = """
 					--in <BAM_FILE>
 					--out <OUTPUT_FILE>
 					
-					--bam_is_sorted <PREVENTS_EXTRA_SORTING_OF_BAM_FILE>
+					--bam_is_sorted PREVENTS_EXTRA_SORTING_OF_BAM_FILE
 					
 					feature requests and bug reports: bpucker@cebitec.uni-bielefeld.de
 					"""
