@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.3 ###
+### v0.35 ###
 
 __usage__ = """
 					python construct_cov_file.py\n
@@ -12,6 +12,8 @@ __usage__ = """
 					optional:
 					--m <SAMTOOLS_MEMORY>[5000000000]
 					--threads <SAMTOOLS_THREADS>[4]
+					--samtools <FULL_PATH_TO_SAMTOOLS>
+					--bedtools <FULL_PATH_TO_BEDTOOLS>
 					
 					feature requests and bug reports: bpucker@cebitec.uni-bielefeld.de
 					"""
@@ -24,9 +26,17 @@ def main( arguments ):
 	
 	bam_file = arguments[ arguments.index( '--in' )+1 ]
 	output_file = arguments[ arguments.index( '--out' )+1 ]
-		
-	samtools = "samtools"
-	bedtools = "genomeCoverageBed"
+	
+	if '--samtools' in arguments:
+		samtools = arguments[ arguments.index( '--samtools' )+1 ]
+	else:
+		samtools = "samtools"
+	
+	if '--bedtools' in arguments:
+		bedtools = arguments[ arguments.index( '--bedtools' )+1 ]
+	else:
+		bedtools = "genomeCoverageBed"
+	
 	
 	if '--bam_is_sorted' in arguments:
 		sorted_bam_file = bam_file

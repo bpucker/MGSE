@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.45 ###
+### v0.5 ###
 
 __usage__ = """
 					python MGSE.py
@@ -15,6 +15,8 @@ __usage__ = """
 					--samtools <FULL_PATH_TO_SAMTOOLS>
 					--bedtools <FULL_PATH_TO_BEDTOOLS>
 					--name <NAME_OF_CURRENCT_ANALYSIS>
+					--m <SAMTOOLS_MEMORY>[5000000000]
+					--threads <SAMTOOLS_THREADS>[4]
 										
 					WARNING: if --busco is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 					WARNING: use of absolute paths is required
