@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.2 ###
+### v0.3 ###
 
 __usage__ = """
 					python construct_cov_file.py\n
@@ -8,6 +8,10 @@ __usage__ = """
 					--out <OUTPUT_FILE>
 					
 					--bam_is_sorted PREVENTS_EXTRA_SORTING_OF_BAM_FILE
+					
+					optional:
+					--m <SAMTOOLS_MEMORY>[5000000000]
+					--threads <SAMTOOLS_THREADS>[4]
 					
 					feature requests and bug reports: bpucker@cebitec.uni-bielefeld.de
 					"""
@@ -27,9 +31,21 @@ def main( arguments ):
 	if '--bam_is_sorted' in arguments:
 		sorted_bam_file = bam_file
 	else:
+		
+		
+		if '--m' in arguments:
+			m = arguments[ arguments.index( '--m' )+1 ]
+		else:
+			m = "5000000000"
+		
+		if '--threads' in arguments:
+			t = arguments[ arguments.index( '--threads' )+1 ]
+		else:
+			t = "4"
+				
 		print "sorting BAM file ..."
 		sorted_bam_file = output_file + "_sorted.bam"
-		cmd = samtools + " sort -m 5000000000 --threads 8 " + bam_file + " > " + sorted_bam_file
+		cmd = samtools + " sort -m " + m + " --threads " + t + " " + bam_file + " > " + sorted_bam_file
 		os.popen( cmd )
 	
 	# --- calculate read coverage depth per position --- #
