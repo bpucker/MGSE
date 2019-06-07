@@ -37,6 +37,7 @@ Optional:
 __WARNING:__
 - if `--busco` is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 - MGSE requires absolute paths (at least use of absolute paths is recommended)
+- python 2.7.x is required for executing MGSE (transfer to python3 is planned)
 
 
 __Possible reference regions:__
