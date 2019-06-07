@@ -6,19 +6,19 @@ MGSE can harness the power of files generated in genome sequencing projects to p
 
 ```
 Usage:
-  python MGSE.py [--cov <FILE_OR_DIR> | --bam <BAM>] --out <DIR>
+  python MGSE.py [--cov <COV_FILE_OR_DIR> | --bam <BAM_FILE_OR_DIR>] --out <DIR>
                  [--ref <TSV> | --gff <GFF> | --busco <FULL_TABLE.TSV> | --all]
 
 Mandatory:
   Coverage data (choose one)
-  --cov STR          Coverage file created by construct_cov_file.py or directory containing
+  --cov STR          Coverage file (COV) created by construct_cov_file.py or directory containing
                      multiple coverage files
-  --bam STR          Bam file to automatically create the coverage file
+  --bam STR          BAM file to automatically create the coverage file
 
   --out STR          Output directory
 
-  Reference regtions to calculate average coverage (choose one)
-  --ref STR          File containing TAB-separated chromosome, start and end
+  Reference regions to calculate average coverage (choose one)
+  --ref STR          File containing TAB-separated chromosome, start, and end
   --gff STR          GFF3 file containing genes
   --busco STR        BUSCO annotation file (full_table_busco_run.tsv)
   --all              Use all positions of the assembly
@@ -26,7 +26,7 @@ Mandatory:
 Optional:
   --black STR       Sequence ID list for exclusion
   --gzip            Search for files "*cov.gz" in --cov if this is a directory
-  --bam_is_sorted   Don't sort bam file
+  --bam_is_sorted   Do not sort BAM file
   --samtools STR    Full path to samtools (if not in your $PATH)
   --bedtools STR    Full path to bedtools (if not in your $PATH)
   --name STR        Prefix for output files []
@@ -36,7 +36,7 @@ Optional:
 				
 __WARNING:__
 - if `--busco` is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
-- MGSE requires absolute paths
+- MGSE requires absolute paths (at least use of absolute paths is recommended)
 
 
 __Possible reference regions:__
@@ -57,6 +57,8 @@ Usage:
 Mandatory:
   --in STR          Bam file
   --out STR         Output file
+
+Optional:
   --bam_is_sorted   Don't sort bam file
   --m INT           Samtools sort memory [5000000000]
   --threads INT     Samtools sort threads [4]
