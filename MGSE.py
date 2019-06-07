@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.5 ###
+### v0.51 ###
 
 __usage__ = """
 					python MGSE.py
@@ -315,12 +315,13 @@ def main( arguments ):
 		
 		cov_files = []
 		for bam_file in bam_files:
-			cov_file = prefix + bam_file.split('/')[-1] + ".bam"
+			cov_file = prefix + bam_file.split('/')[-1] + ".cov"
 			if '--bam_is_sorted' in arguments:
 				construct_cov_file( bam_file, bam_file, cov_file, m, t, samtools, bedtools, False )
 			else:
 				sorted_bam_file = prefix + bam_file.split('/')[-1] + "_sorted.bam"
 				construct_cov_file( bam_file, sorted_bam_file, cov_file, m, t, samtools, bedtools, True )
+			cov_files.append( cov_file )
 		
 	
 	# ---- collect remaining MGSE options --- #
