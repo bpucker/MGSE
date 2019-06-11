@@ -32,6 +32,7 @@ Optional:
   --name STR        Prefix for output files []
   --m INT           Samtools sort memory [5000000000]
   --threads INT     Samtools sort threads [4]
+  --plot TRUE|FALSE Activate or deactivate generation of figures via matplotlib[FALSE]
 ```
 				
 __WARNING:__
