@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.51 ###
+### v0.52 ###
 
 __usage__ = """
 					python MGSE.py
@@ -17,6 +17,7 @@ __usage__ = """
 					--name <NAME_OF_CURRENCT_ANALYSIS>
 					--m <SAMTOOLS_MEMORY>[5000000000]
 					--threads <SAMTOOLS_THREADS>[4]
+					--plot <ACTIVATE_OR_DEACTIVATE_PLOTTING TRUE|FALSE>[FALSE]
 										
 					WARNING: if --busco is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 					WARNING: use of absolute paths is required
@@ -116,7 +117,7 @@ def load_gene_positions( ref_gene_file ):
 	return genes
 
 
-def get_avg_cov( coverage, genes, output_folder ):
+def get_avg_cov( coverage, genes, output_folder, plotting_status ):
 	"""! @brief calculate average sequencing depth based on read coverage in certain reference genes """
 	
 	values = []
@@ -127,13 +128,14 @@ def get_avg_cov( coverage, genes, output_folder ):
 	mean = get_mean( values )
 	med = get_median( values )
 	try:
-		fig, ax = plt.subplots()
-		ax.boxplot( values )
-		ax.set_yscale('log')
-		ax.set_ylabel( "read coverage depth" )
-		ax.set_title( "n (positions) = " + str( len( values ) ) )
-		fig.savefig( output_folder + "avg_cov.png", dpi=600 )
-		plt.close("all")
+		if plotting_status:
+			fig, ax = plt.subplots()
+			ax.boxplot( values )
+			ax.set_yscale('log')
+			ax.set_ylabel( "read coverage depth" )
+			ax.set_title( "n (positions) = " + str( len( values ) ) )
+			fig.savefig( output_folder + "avg_cov.png", dpi=600 )
+			plt.close("all")
 	except:
 		pass
 	
@@ -359,6 +361,10 @@ def main( arguments ):
 	else:
 		blacklist = []
 	
+	if '--plot' in arguments:
+		plotting_status = arguments[ arguments.index( '--plot' )+1 ]
+	else:
+		plotting_status = False
 	
 	report_file = prefix + "report.txt"	#integrate date and time of run
 	
@@ -382,7 +388,7 @@ def main( arguments ):
 				avg_coverage_median = get_median( values )
 				avg_coverage_mean = get_mean( values )
 			else:	#calculation based on reference genes
-				avg_coverage_median, avg_coverage_mean = get_avg_cov( coverage, genes, output_folder )
+				avg_coverage_median, avg_coverage_mean = get_avg_cov( coverage, genes, output_folder, plotting_status )
 			
 			
 			out.write( "average coverage in reference regions (median):\t" + str( avg_coverage_median ) + "\n" )
