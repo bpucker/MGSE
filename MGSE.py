@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.52 ###
+### v0.53 ###
 
 __usage__ = """
 					python MGSE.py
@@ -66,7 +66,7 @@ def get_median( values ):
 def load_coverage( cov_file ):
 	"""! @brief load coverage from given file """
 	
-	if cov_file[-3:].lower() == "cov":	#uncompressed coverage file
+	if cov_file[-3:].lower() == "cov" or cov_file[-3:].lower() == "txt":	#uncompressed coverage file
 		coverage = {}
 		with open( cov_file, "r" ) as f:
 			line = f.readline()
