@@ -14,7 +14,8 @@ Mandatory:
   --cov STR          Coverage file (COV) created by construct_cov_file.py or directory containing
                      multiple coverage files
   --bam STR          BAM file to automatically create the coverage file
-
+  
+  Output directory
   --out STR          Output directory
 
   Reference regions to calculate average coverage (choose one)
