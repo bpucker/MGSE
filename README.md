@@ -33,12 +33,14 @@ Optional:
   --m INT           Samtools sort memory [5000000000]
   --threads INT     Samtools sort threads [4]
   --plot TRUE|FALSE Activate or deactivate generation of figures via matplotlib[FALSE]
+  --blackoff TRUE|FALSE Deactivate the black listing of contigs with high coverage values [FALSE]
 ```
 				
 __WARNING:__
 - if `--busco` is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 - MGSE requires absolute paths (at least use of absolute paths is recommended)
 - python 2.7.x is required for executing MGSE (transfer to python3 is planned)
+- Per default contigs with very high coverage values are put on a black list to prevent inflation of the genome size prediciton by plastome contigs (in plants). However, this function can be disabled via --blackoff to estimate genome sizes with more fragmented assemblies.
 
 
 __Possible reference regions:__
