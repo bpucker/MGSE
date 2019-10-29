@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### bpucker@cebitec.uni-bielefeld.de ###
-### v0.53 ###
+### v0.55 ###
 
 __usage__ = """
 					python MGSE.py
@@ -18,9 +18,11 @@ __usage__ = """
 					--m <SAMTOOLS_MEMORY>[5000000000]
 					--threads <SAMTOOLS_THREADS>[4]
 					--plot <ACTIVATE_OR_DEACTIVATE_PLOTTING TRUE|FALSE>[FALSE]
+					--blackoff <ACTIVATE_OR_DEACTIVATE_PLOTTING TRUE|FALSE>[FALSE]
 										
 					WARNING: if --busco is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 					WARNING: use of absolute paths is required
+					WARNING: high coverage contigs are black listed by default. Use --blackoff to disable black listing.
 					
 					bug reports and feature requests: bpucker@cebitec.uni-bielefeld.de					
 					"""
@@ -160,11 +162,12 @@ def identify_cov_outlier_contigs( coverage ):
 	return blacklist
 
 
-def summarize_coverage( coverage, blacklist ):
+def summarize_coverage( coverage, blacklist, black_status ):
 	"""! @brief calculates cummulative coverage and total length of analysed sequence """
 	
 	if blacklist == []:
-		blacklist = identify_cov_outlier_contigs( coverage )
+		if black_status:
+			blacklist = identify_cov_outlier_contigs( coverage )
 	
 	total_cov = 0
 	total_len = 0
@@ -360,6 +363,10 @@ def main( arguments ):
 				line = f.readline()
 	else:
 		blacklist = []
+		if '--blackoff' in arguments:	#disable black listing of contigs with high coverage values
+			black_status = False
+		else:
+			black_status = True
 	
 	if '--plot' in arguments:
 		plotting_status = arguments[ arguments.index( '--plot' )+1 ]
@@ -394,7 +401,7 @@ def main( arguments ):
 			out.write( "average coverage in reference regions (median):\t" + str( avg_coverage_median ) + "\n" )
 			out.write( "average coverage in reference regions (mean):\t" + str( avg_coverage_mean ) + "\n" )
 			
-			total_cov, total_len, cm_total_cov, cm_total_len = summarize_coverage( coverage, blacklist )
+			total_cov, total_len, cm_total_cov, cm_total_len = summarize_coverage( coverage, blacklist, black_status )
 			
 			out.write( "total coverage (combined length of all mapped reads):\t" + str( total_cov ) + "\n" )
 			out.write( "total sequence length:\t" + str( total_len ) + "\n" )
