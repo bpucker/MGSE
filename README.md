@@ -11,7 +11,7 @@ MGSE can harness the power of files generated in genome sequencing projects to p
 
 ```
 Usage:
-  python MGSE.py [--cov <COV_FILE_OR_DIR> | --bam <BAM_FILE_OR_DIR>] --out <DIR>
+  python3 MGSE3.py [--cov <COV_FILE_OR_DIR> | --bam <BAM_FILE_OR_DIR>] --out <DIR>
                  [--ref <TSV> | --gff <GFF> | --busco <FULL_TABLE.TSV> | --all]
 
 Mandatory:
@@ -43,9 +43,7 @@ Optional:
 ```
 				
 __WARNING:__
-- if `--busco` is used, the BUSCO GFF3 files need to be in the default folder relative to the provided TSV file
 - MGSE requires absolute paths (at least use of absolute paths is recommended)
-- python 2.7.x is required for executing MGSE (transfer to python3 is planned)
 - Per default contigs with very high coverage values are put on a black list to prevent inflation of the genome size prediciton by plastome contigs (in plants). However, this function can be disabled via --blackoff to estimate genome sizes with more fragmented assemblies.
 
 
@@ -55,7 +53,7 @@ __Possible reference regions:__
 
 2) `--gff` A GFF3 file with genes which should serve as reference regions.
 
-3) `--busco` This will extract the single copy BUSCOs from the provided TSV file and retrieves the corresponding annotation from GFF3 files generated while running BUSCO.
+3) `--busco` This will extract the single copy BUSCOs from the provided TSV file.
 
 4) `--all` All positions of the assembly will be included in the average coverage calculation.
 
@@ -69,7 +67,7 @@ Mandatory:
   --out STR         Output file
 
 Optional:
-  --bam_is_sorted   Don't sort bam file
+  --bam_is_sorted   Do not sort BAM file
   --m INT           Samtools sort memory [5000000000]
   --threads INT     Samtools sort threads [4]
 ```
