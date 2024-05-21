@@ -1,6 +1,6 @@
 ### Boas Pucker ###
 ### b.pucker@tu-bs.de ###
-### v3.0.1 ###
+### v3.0.3 ###
 
 __usage__ = """
 					python3 MGSE3.py
@@ -168,12 +168,15 @@ def summarize_coverage( coverage, blacklist, black_status ):
 		if black_status:
 			blacklist = identify_cov_outlier_contigs( coverage )
 	
+	sys.stdout.write( "number of contigs on blacklist: " + str( len( blacklist ) ) + "\n" )
+	sys.stdout.flush()
+	
 	total_cov = 0
 	total_len = 0
 	cm_total_cov = 0
 	cm_total_len = 0
 	
-	for key in coverage.keys():
+	for key in list( coverage.keys() ):
 		value = coverage[ key ]
 		if key not in blacklist:
 			total_cov += sum( value )
@@ -346,6 +349,7 @@ def main( arguments ):
 	if '--black' in arguments:
 		black_list_file = arguments[ arguments.index( '--black' )+1 ]
 		blacklist = []
+		black_status = True
 		with open( black_list_file, "r" ) as f:
 			line = f.readline()
 			while line:
