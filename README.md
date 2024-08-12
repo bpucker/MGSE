@@ -25,7 +25,7 @@ Mandatory:
 
   Reference regions to calculate average coverage (choose one)
   --ref STR          File containing TAB-separated chromosome, start, and end
-  --gff STR          GFF3 file containing genes
+  --gff STR          GFF3 file containing genes given by BUSCO
   --busco STR        BUSCO annotation file (full_table_busco_run.tsv)
   --all              Use all positions of the assembly
 		
@@ -51,7 +51,7 @@ __Possible reference regions:__
 
 1) `--ref` A very simple TAB-separated text file with information about chromosome, start, and end of regions which should be used as a reference set for the coverage calculation.
 
-2) `--gff` A GFF3 file with genes which should serve as reference regions.
+2) `--gff` A GFF3 file with genes which should serve as reference regions. Only the GFF3 file produced by BUSCO can be used here.
 
 3) `--busco` This will extract the single copy BUSCOs from the provided TSV file.
 
