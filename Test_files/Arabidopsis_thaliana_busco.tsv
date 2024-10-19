@@ -1,0 +1,5 @@
+# BUSCO version is: 5.7.1 									
+# The lineage dataset is: embryophyta_odb10 (Creation date: 2024-01-08, number of genomes: 50, number of BUSCOs: 1614)									
+#Busco id	Status	Sequence	Gene Start	Gene End	Strand	Score	Length	OrthoDB url	Description
+727at3193	Complete	1	23995	30814	+	2493.3	1286	https://v10-1.orthodb.org/?query=727at3193	Dicer dimerisation domain
+8939at3193	Complete	1	87949	95543	+	1499.5	860	https://v10-1.orthodb.org/?query=8939at3193	GHMP kinase, C-terminal domain
