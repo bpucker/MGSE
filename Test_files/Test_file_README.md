@@ -8,4 +8,6 @@ You can find different input files and reference region files here.
 
 Please read the script README for the usage of these different files.
 
-NOTE: The fastq test file has long reads; If testing with this fastq file input, use minimap2 as the aligner.
+NOTE: i) The fastq test file has long reads; If testing with this fastq file input, use minimap2 as the aligner.
+
+      ii) The .bam test file is already sorted.
