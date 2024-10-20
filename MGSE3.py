@@ -1,23 +1,30 @@
 ### Boas Pucker ###
 ### b.pucker@tu-bs.de ###
-### v3.0.3 ###
+### Shakunthala Natarajan ###
+### v3.1.0 ###
 
 __usage__ = """
 					python3 MGSE3.py
-					--cov <FULL_PATH_TO_COVERAGE_FILE_OR_FOLDER>| --bam <FULL_PATH_TO_BAM_FILE>
+					--cov <FULL_PATH_TO_COVERAGE_FILE_OR_FOLDER>| --bam <FULL_PATH_TO_BAM_FILE> 
+					| --fasta <FULL_PATH_TO_UNCOMPRESSED_FASTA_FILE> --fastq <FULL_PATH_TO_SINGLE_FASTQ_FILE_OR_FOLDER_OF_FASTQ_FILES_ENDING_WITH/> <PLACE MULTIPLE FASTQ_FILES_IN_FOLDER> --gzip_fq <SPECIFY_THIS_OPTION_IF_YOU_HAVE_COMPRESED_FASTQ_FILE(S)>
+					--seqtech <Illumina> or <ONT> or <PacBio>
 					--out <FULL_PATH_TO_OUTPUT_DIRECTORY>
 					--ref | --gff <FULL_PATH_TO_REF_GENE_FILE_OR_GFF3_FILE> | --busco <FULL_PATH_TO 'full_table_busco_run.tsv'> | --all <ALL_POS_USED_FOR_CALCULATION>
 					
 					optional:
 					--black <FULL_PATH_TO_FILE_WITH_CONTIG_NAMES_FOR_EXCLUSION>
-					--gzip <ACITVATES_SEARCH_FOR_COMPRESSED_FILES>
+					--gzip <ACITVATES_SEARCH_FOR_COMPRESSED_COVERAGE_FILES>
 					--bam_is_sorted PREVENTS_SORTING_OF_BAM_FILE
 					--samtools <FULL_PATH_TO_SAMTOOLS>
 					--bedtools <FULL_PATH_TO_BEDTOOLS>
-					--name <NAME_OF_CURRENCT_ANALYSIS>
+					--short_read_aligner <FULL_PATH_TO_BWA_MEM_SHORT_READ_ALIGNER>
+					--long_read_aligner <FULL_PATH_TO_MINIMAP2_LONG_READ_ALIGNER>
+					--name <NAME_OF_CURRENT_ANALYSIS>
+					--feature <specify the specific feature (if other than gene) you want to choose from the GFF file
 					--m <SAMTOOLS_MEMORY>[5000000000]
 					--threads <SAMTOOLS_THREADS>[4]
 					--plot <ACTIVATE_OR_DEACTIVATE_PLOTTING TRUE|FALSE>[FALSE]
+					--black_list_factor <SPECIFY THE BLACKLIST FACTOR FOR BLACKLISTING CONTIGS><FLOAT_OR_INTEGER>
 					--blackoff <ACTIVATE_OR_DEACTIVATE_PLOTTING TRUE|FALSE>[FALSE]
 					
 					WARNING: use of absolute paths is required
@@ -54,7 +61,7 @@ def get_mean( values ):
 
 def get_median( values ):
 	"""! @brief calculate median of given list of values """
-	
+	values.sort()
 	if len( values ) >= 1:
 		if len( values ) % 2 == 0:
 			return ( values[ int( ( len( values ) / 2 ) -1 ) ] + values[ int( len( values ) / 2 ) ] ) / 2.0
@@ -88,6 +95,7 @@ def load_coverage( cov_file ):
 		coverage = {}
 		with gzip.open( cov_file, "rb" ) as f:
 			line = f.readline()
+			line = line.decode('utf-8')
 			prev_chr = line.split('\t')[0]
 			cov = []
 			while line:
@@ -98,6 +106,7 @@ def load_coverage( cov_file ):
 					cov = []
 				cov.append( float( parts[2] ) )
 				line = f.readline()
+				line = line.decode('utf-8')
 			coverage.update( { prev_chr: cov } )
 		return coverage
 
@@ -118,14 +127,30 @@ def load_gene_positions( ref_gene_file ):
 	return genes
 
 
-def get_avg_cov( coverage, genes, output_folder, plotting_status ):
+
+def get_avg_cov( coverage, genes, output_folder, plotting_status, black_user_specified, black_status, excl_use_spcf_seq, blf):
 	"""! @brief calculate average sequencing depth based on read coverage in certain reference genes """
-	
+
 	values = []
+	print(str(black_status))
+	if black_status:  # calculation with reference genes when --blackoff not in arguments
+		if black_user_specified:#removing genes on blacklisted contigs when --black in arguments
+			for element in excl_use_spcf_seq:
+				for k in range(len(genes) - 1, -1, -1):
+					if genes[k]['chr'] == element:
+						del genes[k]
+		else:# removing genes on blacklisted contigs when --blackoff and --black not in arguments
+			excluded_seq_ref_gene = []
+			excluded_seq_ref_gene = identify_cov_outlier_contigs(coverage, blf)
+			for elements in excluded_seq_ref_gene:
+				for i in range(len(genes) - 1, -1, -1):
+					if genes[i]['chr'] == elements:
+						del genes[i]
 	for gene in genes:
 		tmp = coverage[ gene['chr'] ][ gene['start']:gene['end'] ]
 		for val in tmp:
 			values.append( val )
+	values.sort()
 	mean = get_mean( values )
 	med = get_median( values )
 	try:
@@ -143,32 +168,40 @@ def get_avg_cov( coverage, genes, output_folder, plotting_status ):
 	return med, mean
 
 
-def identify_cov_outlier_contigs( coverage ):
+def identify_cov_outlier_contigs( coverage, blf ):
 	"""! @brief identify contigs with outlier coverage """
 	
 	avg_values = []
 	vals_per_contig = []
 	for key in coverage.keys():
+		coverage[key].sort()
 		avg_cov = get_median( coverage[ key ] )
 		avg_values.append( avg_cov )
 		vals_per_contig.append( { 'key': key, 'val': avg_cov } )
+
+	avg_values.sort()
 	total_avg_cov = get_median( avg_values )
-	
+
 	blacklist = []
 	for entry in vals_per_contig:
-		if entry['val'] > 1.5*total_avg_cov:
+		if entry['val'] > blf*total_avg_cov:
 			blacklist.append( entry['key'] )
 	return blacklist
 
 
-def summarize_coverage( coverage, blacklist, black_status ):
+def summarize_coverage( coverage, blacklist, black_status, blf):
 	"""! @brief calculates cummulative coverage and total length of analysed sequence """
 	
 	if blacklist == []:
 		if black_status:
-			blacklist = identify_cov_outlier_contigs( coverage )
+			blacklist = identify_cov_outlier_contigs( coverage, blf )
+			excluded_seq=blacklist.copy()
+		else:
+			excluded_seq=[]
+
+
 	
-	sys.stdout.write( "number of contigs on blacklist: " + str( len( blacklist ) ) + "\n" )
+	sys.stdout.write( "number of contigs on blacklist: " + str( len( blacklist ) ) + str(blacklist) + "\n" )
 	sys.stdout.flush()
 	
 	total_cov = 0
@@ -184,10 +217,10 @@ def summarize_coverage( coverage, blacklist, black_status ):
 		cm_total_cov += sum( value )
 		cm_total_len += len( value )
 	
-	return total_cov, total_len, cm_total_cov, cm_total_len
+	return total_cov, total_len, cm_total_cov, cm_total_len, excluded_seq
 
 
-def construct_ref_gene_file( gff, ref_gene_file, feature_type="gene" ):
+def construct_ref_gene_file( gff, ref_gene_file, feature_type ):
 	"""! @brief generate reference region file based on provided GFF3 file """
 	
 	# --- load all feature from given GFF3 file --- #
@@ -204,7 +237,6 @@ def construct_ref_gene_file( gff, ref_gene_file, feature_type="gene" ):
 					except IndexError:
 						genes.append( { 'chr': parts[0], 'start': parts[3], 'end': parts[4], 'ID': "n/a" } )
 			line = f.readline()
-	
 	# --- construct file with reference regions --- #
 	with open( ref_gene_file, "w" ) as out:
 		for gene in genes:
@@ -242,6 +274,57 @@ def load_BUSCOs( busco_file ):
 			line = f.readline()
 	return genes, busco_gene_positions
 
+def mapping( input_fasta, fastq_files, input_ngs, sam_file, bam_file, samtools, bwa, minimap2, t):
+	"""! @brief generate BAM file from given FASTA and FASTQ files"""
+	if input_ngs == 'Illumina':
+		sys.stdout.write("You have given illumina reads. So, indexing started with BWA-MEM ...\n")
+		sys.stdout.flush()
+		cmd = bwa + " index " + input_fasta
+		p = subprocess.Popen(args=cmd, shell=True)
+		p.communicate()
+		sys.stdout.write("Mapping started with BWA-MEM ...\n")
+		sys.stdout.flush()
+		if len(fastq_files) == 2:#paired end illumina reads
+			cmd = bwa + " mem " + "-t " + t + " " + input_fasta + " " + fastq_files[0] + " " + fastq_files[1] + " > " + sam_file
+			p = subprocess.Popen(args=cmd, shell=True)
+			p.communicate()
+		elif len(fastq_files) == 1:
+			cmd = bwa + " mem " + "-t " + t + " " + input_fasta + " " + fastq_files[0] + " > " + sam_file
+			p = subprocess.Popen(args=cmd, shell=True)
+			p.communicate()
+	elif input_ngs == 'ONT':
+		index_file = input_fasta.split('/')[-1] + ".mmi"
+		sys.stdout.write("You have given ONT reads. So, indexing started with minimap2 ...\n")
+		sys.stdout.flush()
+		cmd = minimap2 + " -x map-ont -d " + index_file + " " + input_fasta
+		p = subprocess.Popen(args=cmd, shell=True)
+		p.communicate()
+		sys.stdout.write("Mapping started with minimap2 ...\n")
+		sys.stdout.flush()
+		cmd = minimap2 + " -ax map-ont " + index_file + " " + fastq_files[0] + " > " + sam_file
+		p = subprocess.Popen(args=cmd, shell=True)
+		p.communicate()
+	elif input_ngs == 'PacBio':
+		index_file = input_fasta.split('/')[-1] + ".mmi"
+		sys.stdout.write("You have given PacBio reads. So, indexing started with minimap2 ...\n")
+		sys.stdout.flush()
+		cmd = minimap2 + " -x map-pb -d " + index_file + " " + input_fasta
+		p = subprocess.Popen(args=cmd, shell=True)
+		p.communicate()
+		sys.stdout.write("Mapping started with minimap2 ...\n")
+		sys.stdout.flush()
+		cmd = minimap2 + " -ax map-pb " + index_file + " " + fastq_files[0] + " > " + sam_file
+		p = subprocess.Popen(args=cmd, shell=True)
+		p.communicate()
+	else:
+		sys.stdout.write("You have not specified your NGS technique correctly. Exiting ...\n")
+		sys.stdout.flush()
+		sys.exit(__usage__)
+	sys.stdout.write("Converting SAM file to BAM file ...\n")
+	sys.stdout.flush()
+	cmd = samtools + " view -S -b --threads " + t + " " + sam_file + " > " + bam_file
+	p = subprocess.Popen(args=cmd, shell=True)
+	p.communicate()
 
 def construct_cov_file( bam_file, sorted_bam_file, cov_file, m, t, samtools, bedtools, sorting ):
 	"""! @brief generate COV file for given BAM file """
@@ -284,10 +367,10 @@ def main( arguments ):
 			cov_files = [ input_cov ]
 	
 	# --- if BAM file or folder of BAM files is provided --- #
-	else:
+	elif '--bam' in arguments:
 		input_bam = arguments[ arguments.index( '--bam' )+1 ]	#can be file or directory with files!
 		if input_bam[-1] == "/":
-			bam_files = sorted( glob.glob( input_cov + "*.bam" ) )
+			bam_files = sorted( glob.glob( input_bam + "*.bam" ) )
 		else:
 			bam_files = [ input_bam ]
 		
@@ -321,7 +404,59 @@ def main( arguments ):
 				sorted_bam_file = prefix + bam_file.split('/')[-1] + "_sorted.bam"
 				construct_cov_file( bam_file, sorted_bam_file, cov_file, m, t, samtools, bedtools, True )
 			cov_files.append( cov_file )
-		
+	# --- if FASTA file and FASTQ file(s) are provided --- #
+	else:
+		input_fasta = arguments[arguments.index('--fasta') + 1]
+		sam_file = prefix + input_fasta.split('/')[-1] + ".sam"
+		bam_file = prefix + input_fasta.split('/')[-1] + ".bam"
+		input_ngs = arguments[arguments.index('--seqtech') + 1]
+		input_fastq = arguments[arguments.index('--fastq') + 1]
+		if input_fastq[-1] == "/":
+			fastq_files = sorted(glob.glob(input_fastq + "*.fq"))
+			fastq_files += sorted(glob.glob(input_fastq + "*.fastq"))
+			if '--gzip_fq' in arguments:
+				fastq_files += sorted(glob.glob(input_fastq + "*.fq.gz"))
+				fastq_files += sorted(glob.glob(input_fastq + "*.fastq.gz"))
+		else:
+			fastq_files = [input_fastq]
+		if '--samtools' in arguments:
+			samtools = arguments[ arguments.index( '--samtools' )+1 ]
+		else:
+			samtools = "samtools"
+		if '--short_read_aligner' in arguments:
+			bwa = arguments[ arguments.index( '--short_read_aligner' )+1 ]
+		else:
+			bwa = "bwa"
+		if '--long_read_aligner' in arguments:
+			minimap2 = arguments[arguments.index('--long_read_aligner') + 1]
+		else:
+			minimap2 = "minimap2"
+
+		if '--m' in arguments:
+			m = arguments[arguments.index('--m') + 1]
+		else:
+			m = "5000000000"
+
+		if '--threads' in arguments:
+			t = arguments[arguments.index('--threads') + 1]
+		else:
+			t = "4"
+
+		if '--bedtools' in arguments:
+			bedtools = arguments[arguments.index('--bedtools') + 1]
+		else:
+			bedtools = "genomeCoverageBed"
+
+		mapping(input_fasta, fastq_files, input_ngs, sam_file, bam_file, samtools, bwa, minimap2, t)
+
+		cov_files = []
+		cov_file = prefix + bam_file.split('/')[-1] + ".cov"
+		if '--bam_is_sorted' in arguments:
+			construct_cov_file(bam_file, bam_file, cov_file, m, t, samtools, bedtools, False)
+		else:
+			sorted_bam_file = prefix + bam_file.split('/')[-1] + "_sorted.bam"
+			construct_cov_file(bam_file, sorted_bam_file, cov_file, m, t, samtools, bedtools, True)
+		cov_files.append(cov_file)
 	
 	# ---- collect remaining MGSE options --- #
 	if '--feature' in arguments:
@@ -345,22 +480,32 @@ def main( arguments ):
 			use_ref_genes = False
 		else:
 			sys.exit( __usage__ )
-	
+	if '--black_list_factor' in arguments:
+		blf = arguments[arguments.index('--black_list_factor') + 1]
+		blf = float(blf)
+	else:
+		blf=1.5
 	if '--black' in arguments:
 		black_list_file = arguments[ arguments.index( '--black' )+1 ]
 		blacklist = []
 		black_status = True
+		black_user_specified = True
 		with open( black_list_file, "r" ) as f:
 			line = f.readline()
 			while line:
 				blacklist.append( line.strip() )
 				line = f.readline()
+		excl_use_spcf_seq=blacklist.copy()
 	else:
+		excl_use_spcf_seq = []
 		blacklist = []
+		black_user_specified = False
 		if '--blackoff' in arguments:	#disable black listing of contigs with high coverage values
 			black_status = False
+			excl_use_spcf_seq = []
 		else:
 			black_status = True
+			excl_use_spcf_seq = []
 	
 	if '--plot' in arguments:
 		plotting_status = arguments[ arguments.index( '--plot' )+1 ]
@@ -382,20 +527,34 @@ def main( arguments ):
 				os.makedirs( output_folder )
 			
 			coverage = load_coverage( cov_file )
-			
-			
-			if not use_ref_genes:	#calculation based on all positions
-				values = list( sorted( [ x for chromosome in coverage.values() for x in chromosome ] ) )
-				avg_coverage_median = get_median( values )
-				avg_coverage_mean = get_mean( values )
+			total_cov, total_len, cm_total_cov, cm_total_len, excluded_seq = summarize_coverage(coverage, blacklist, black_status, blf)
+
+
+			if not use_ref_genes:# calculation based on all positions
+				if black_status:# calculation based on all positions when --blackoff is not given
+					if '--black' not in arguments:# calculation based on all positions when --black not in arguments
+						for seq in excluded_seq:
+							coverage.pop(seq,None)
+						values = list(sorted([x for chromosome in coverage.values() for x in chromosome]))
+						avg_coverage_median = get_median(values)
+						avg_coverage_mean = get_mean(values)
+					else:# calculation based on all positions when --black in arguments
+						for seqs in excl_use_spcf_seq:
+							coverage.pop(seqs,None)
+						values = list(sorted([x for chromosome in coverage.values() for x in chromosome]))
+						avg_coverage_median = get_median(values)
+						avg_coverage_mean = get_mean(values)
+				else:# calculation based on all positions when --blackoff is given
+					values = list(sorted([x for chromosome in coverage.values() for x in chromosome]))
+					avg_coverage_median = get_median(values)
+					avg_coverage_mean = get_mean(values)
 			else:	#calculation based on reference genes
-				avg_coverage_median, avg_coverage_mean = get_avg_cov( coverage, genes, output_folder, plotting_status )
+				avg_coverage_median, avg_coverage_mean = get_avg_cov( coverage, genes, output_folder, plotting_status, black_user_specified, black_status , excl_use_spcf_seq, blf )
 			
 			
 			out.write( "average coverage in reference regions (median):\t" + str( avg_coverage_median ) + "\n" )
 			out.write( "average coverage in reference regions (mean):\t" + str( avg_coverage_mean ) + "\n" )
-			
-			total_cov, total_len, cm_total_cov, cm_total_len = summarize_coverage( coverage, blacklist, black_status )
+
 			
 			out.write( "total coverage (combined length of all mapped reads):\t" + str( total_cov ) + "\n" )
 			out.write( "total sequence length:\t" + str( total_len ) + "\n" )
@@ -437,6 +596,14 @@ elif '--bam' in sys.argv and '--out' in sys.argv and '--gff' in sys.argv:
 elif '--bam' in sys.argv and '--out' in sys.argv and '--busco' in sys.argv:
 	main( sys.argv )
 elif '--bam' in sys.argv and '--out' in sys.argv and '--all' in sys.argv:
+	main( sys.argv )
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--ref' in sys.argv:
+	main( sys.argv )
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--gff' in sys.argv:
+	main( sys.argv )
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--busco' in sys.argv:
+	main( sys.argv )
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--all' in sys.argv:
 	main( sys.argv )
 else:
 	sys.exit( __usage__ )
