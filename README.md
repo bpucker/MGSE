@@ -11,47 +11,65 @@ MGSE can harness the power of files generated in genome sequencing projects to p
 
 ```
 Usage:
-  python3 MGSE3.py [--cov <COV_FILE_OR_DIR> | --bam <BAM_FILE_OR_DIR>] --out <DIR>
-                 [--ref <TSV> | --gff <GFF> | --busco <FULL_TABLE.TSV> | --all]
+  python3 MGSE3.py [--cov <COV_FILE_OR_DIR> | --bam <BAM_FILE_OR_DIR>] | --fasta <FASTA_FILE>
+		   --fastq <FASTQ_FILE_OR_DIR> --gzip_fq <SPECIFY_FOR_COMPRESSED_FASTQ_FILES>
+                   --seqtech <SEQUENCING_TECHNOLOGY>]
+                   --out <DIR>
+                   [--ref <TSV> | --gff <GFF> | --busco <FULL_TABLE.TSV> | --all]
 
 Mandatory:
   Coverage data (choose one)
-  --cov STR          Coverage file (COV) created by construct_cov_file.py or directory containing
-                     multiple coverage files
-  --bam STR          BAM file to automatically create the coverage file
+  [--cov STR                Coverage file (COV) created by construct_cov_file.py or directory containing
+                            multiple coverage files; Extension of uncompressed cov file should be .cov or
+                            or .txt; compressed file extension should be .cov.gz or.txt.gz]
+  [--bam STR                BAM file to automatically create the coverage file]
+  [--fasta STR              FASTA assembly file for read mapping
+   --fastq STR              Single FASTQ file or a directory containing FASTQ files; If you have multiple FASTQ files,
+                            It is mandatory to put them in a folder and specify the folder path; While specifying the
+                            folder path ensure that it ends with a backslash '/' since it is mandatory for the script
+                            to work correctly
+   --gzip_fq                Specify this flag if the FASTQ file(s) are compressed
+   --seqtech                Specify the sequencing technology used to obtain reads in the FASTQ file;
+                            Options are, Illumina, ONT, PacBio]
   
   Output directory
-  --out STR          Output directory
+  --out STR                 Output directory
 
   Reference regions to calculate average coverage (choose one)
-  --ref STR          File containing TAB-separated chromosome, start, and end
-  --gff STR          GFF3 file containing genes given by BUSCO
-  --busco STR        BUSCO annotation file (full_table_busco_run.tsv)
-  --all              Use all positions of the assembly
+  --ref STR                 File containing TAB-separated sequence ID, start position, and end
+                            position
+  --gff STR                 GFF3 file 
+  --busco STR               BUSCO annotation file (full_table.tsv)
+  --all                     Use all positions of the assembly
 		
 Optional:
-  --black STR       Sequence ID list for exclusion
-  --gzip            Search for files "*cov.gz" in --cov if this is a directory
-  --bam_is_sorted   Do not sort BAM file
-  --samtools STR    Full path to samtools (if not in your $PATH)
-  --bedtools STR    Full path to bedtools (if not in your $PATH)
-  --name STR        Prefix for output files []
-  --m INT           Samtools sort memory [5000000000]
-  --threads INT     Samtools sort threads [4]
-  --plot TRUE|FALSE Activate or deactivate generation of figures via matplotlib[FALSE]
-  --blackoff TRUE|FALSE Deactivate the black listing of contigs with high coverage values [FALSE]
+  --black STR               Sequence ID list for exclusion
+  --bam_is_sorted           Do not sort BAM file
+  --samtools STR            Full path to samtools (if not in your $PATH)
+  --bedtools STR            Full path to bedtools (if not in your $PATH)
+  --short_read_aligner      Full path to BWA MEM (if not in your $PATH)
+  --long_read_aligner       Full path to minimap2 (if not in your $PATH) 
+  --name STR                Prefix for output files []
+  --feature STR             Specific feature for analysis from GFF file (if other than 'gene')
+  --m INT                   Samtools sort memory [5000000000]
+  --threads INT             Samtools sort threads [4]
+  --plot BOOLEAN            Activate or deactivate generation of figures via matplotlib[FALSE]
+  --gzip                    Search for files "*cov.gz" in --cov if this is a directory
+  --black_list_factor FLOAT Specify black list factor for blacklisting of contigs
+                            with high coverage values<DEFAULT 1.5>
+  --blackoff BOOLEAN        Deactivate the black listing of contigs with high coverage values [FALSE]
 ```
 				
 __WARNING:__
 - MGSE requires absolute paths (at least use of absolute paths is recommended)
-- Per default contigs with very high coverage values are put on a black list to prevent inflation of the genome size prediciton by plastome contigs (in plants). However, this function can be disabled via --blackoff to estimate genome sizes with more fragmented assemblies.
+- Per default contigs with very high coverage values are put on a black list to prevent inflation of the genome size prediction    by plastome contigs (in plants). However, this function can be disabled via --blackoff to estimate genome sizes with more        fragmented assemblies.
 
 
 __Possible reference regions:__
 
-1) `--ref` A very simple TAB-separated text file with information about chromosome, start, and end of regions which should be used as a reference set for the coverage calculation.
+1) `--ref` A very simple TAB-separated text file with information about chromosome, start, and end of regions which should be        used as a reference set for the coverage calculation.
 
-2) `--gff` A GFF3 file with genes which should serve as reference regions. Only the GFF3 file produced by BUSCO can be used here.
+2) `--gff` A GFF3 file with genes which should serve as reference regions.
 
 3) `--busco` This will extract the single copy BUSCOs from the provided TSV file.
 
@@ -60,7 +78,9 @@ __Possible reference regions:__
 
 ```
 Usage:
-  python construct_cov_file.py
+  python2 construct_cov_file.py
+
+  --in <BAM_FILE> --out <OUTPUT_FILE>
 
 Mandatory:
   --in STR          Bam file
@@ -70,6 +90,8 @@ Optional:
   --bam_is_sorted   Do not sort BAM file
   --m INT           Samtools sort memory [5000000000]
   --threads INT     Samtools sort threads [4]
+  --samtools STR    Full path to samtools (if not in your $PATH)
+  --bedtools STR    Full path to bedtools (if not in your $PATH)
 ```
 
 
