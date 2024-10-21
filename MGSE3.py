@@ -6,17 +6,15 @@
 __usage__ = """
 					python3 MGSE3.py
 					--cov <FULL_PATH_TO_COVERAGE_FILE_OR_FOLDER>| --bam <FULL_PATH_TO_BAM_FILE> 
-					| --fasta <FULL_PATH_TO_UNCOMPRESSED_FASTA_FILE> --fastq <FULL_PATH_TO_SINGLE_FASTQ_FILE_OR_FOLDER_OF_FASTQ_FILES_ENDING_WITH/> <PLACE MULTIPLE FASTQ_FILES_IN_FOLDER> --gzip_fq <SPECIFY_THIS_OPTION_IF_YOU_HAVE_COMPRESED_FASTQ_FILE(S)>
-					--seqtech <Illumina> or <ONT> or <PacBio>
+					| --fasta <FULL_PATH_TO_UNCOMPRESSED_FASTA_FILE> --fastq <FULL_PATH_TO_SINGLE_FASTQ_FILE_OR_FOLDER_OF_FASTQ_FILES_ENDING_WITH/> <PLACE MULTIPLE FASTQ_FILES_IN_FOLDER> 
 					--out <FULL_PATH_TO_OUTPUT_DIRECTORY>
 					--ref | --gff <FULL_PATH_TO_REF_GENE_FILE_OR_GFF3_FILE> | --busco <FULL_PATH_TO 'full_table_busco_run.tsv'> | --all <ALL_POS_USED_FOR_CALCULATION>
 					
 					optional:
 					--black <FULL_PATH_TO_FILE_WITH_CONTIG_NAMES_FOR_EXCLUSION>
-					--gzip <ACITVATES_SEARCH_FOR_COMPRESSED_COVERAGE_FILES>
-					--bam_is_sorted PREVENTS_SORTING_OF_BAM_FILE
 					--samtools <FULL_PATH_TO_SAMTOOLS>
 					--bedtools <FULL_PATH_TO_BEDTOOLS>
+					--seqtech <illumina> or <ont> or <pacbio>
 					--short_read_aligner <FULL_PATH_TO_BWA_MEM_SHORT_READ_ALIGNER>
 					--long_read_aligner <FULL_PATH_TO_MINIMAP2_LONG_READ_ALIGNER>
 					--name <NAME_OF_CURRENT_ANALYSIS>
@@ -26,6 +24,9 @@ __usage__ = """
 					--plot <ACTIVATE_OR_DEACTIVATE_PLOTTING TRUE|FALSE>[FALSE]
 					--black_list_factor <SPECIFY THE BLACKLIST FACTOR FOR BLACKLISTING CONTIGS><FLOAT_OR_INTEGER>
 					--blackoff <ACTIVATE_OR_DEACTIVATE_PLOTTING TRUE|FALSE>[FALSE]
+					--gzip <ACITVATES_SEARCH_FOR_COMPRESSED_COVERAGE_FILES>
+					--gzip_fq <SPECIFY_THIS_OPTION_IF_YOU_HAVE_COMPRESED_FASTQ_FILE(S)>
+					--bam_is_sorted PREVENTS_SORTING_OF_BAM_FILE
 					
 					WARNING: use of absolute paths is required
 					WARNING: high coverage contigs are black listed by default. Use --blackoff to disable black listing.
@@ -276,7 +277,7 @@ def load_BUSCOs( busco_file ):
 
 def mapping( input_fasta, fastq_files, input_ngs, sam_file, bam_file, samtools, bwa, minimap2, t):
 	"""! @brief generate BAM file from given FASTA and FASTQ files"""
-	if input_ngs == 'Illumina':
+	if input_ngs == 'illumina':
 		sys.stdout.write("You have given illumina reads. So, indexing started with BWA-MEM ...\n")
 		sys.stdout.flush()
 		cmd = bwa + " index " + input_fasta
@@ -292,7 +293,7 @@ def mapping( input_fasta, fastq_files, input_ngs, sam_file, bam_file, samtools, 
 			cmd = bwa + " mem " + "-t " + t + " " + input_fasta + " " + fastq_files[0] + " > " + sam_file
 			p = subprocess.Popen(args=cmd, shell=True)
 			p.communicate()
-	elif input_ngs == 'ONT':
+	elif input_ngs == 'ont':
 		index_file = input_fasta.split('/')[-1] + ".mmi"
 		sys.stdout.write("You have given ONT reads. So, indexing started with minimap2 ...\n")
 		sys.stdout.flush()
@@ -304,7 +305,7 @@ def mapping( input_fasta, fastq_files, input_ngs, sam_file, bam_file, samtools, 
 		cmd = minimap2 + " -ax map-ont " + index_file + " " + fastq_files[0] + " > " + sam_file
 		p = subprocess.Popen(args=cmd, shell=True)
 		p.communicate()
-	elif input_ngs == 'PacBio':
+	elif input_ngs == 'pacbio':
 		index_file = input_fasta.split('/')[-1] + ".mmi"
 		sys.stdout.write("You have given PacBio reads. So, indexing started with minimap2 ...\n")
 		sys.stdout.flush()
@@ -409,8 +410,11 @@ def main( arguments ):
 		input_fasta = arguments[arguments.index('--fasta') + 1]
 		sam_file = prefix + input_fasta.split('/')[-1] + ".sam"
 		bam_file = prefix + input_fasta.split('/')[-1] + ".bam"
-		input_ngs = arguments[arguments.index('--seqtech') + 1]
 		input_fastq = arguments[arguments.index('--fastq') + 1]
+		if '--seqtech' in arguments:
+			input_ngs = arguments[arguments.index('--seqtech') + 1]
+		else:
+			input_ngs = 'illumina'
 		if input_fastq[-1] == "/":
 			fastq_files = sorted(glob.glob(input_fastq + "*.fq"))
 			fastq_files += sorted(glob.glob(input_fastq + "*.fastq"))
@@ -597,13 +601,13 @@ elif '--bam' in sys.argv and '--out' in sys.argv and '--busco' in sys.argv:
 	main( sys.argv )
 elif '--bam' in sys.argv and '--out' in sys.argv and '--all' in sys.argv:
 	main( sys.argv )
-elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--ref' in sys.argv:
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--ref' in sys.argv:
 	main( sys.argv )
-elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--gff' in sys.argv:
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--gff' in sys.argv:
 	main( sys.argv )
-elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--busco' in sys.argv:
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--busco' in sys.argv:
 	main( sys.argv )
-elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--seqtech' in sys.argv and '--all' in sys.argv:
+elif '--fasta' in sys.argv and '--fastq' in sys.argv and '--all' in sys.argv:
 	main( sys.argv )
 else:
 	sys.exit( __usage__ )
