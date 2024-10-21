@@ -11,53 +11,45 @@ MGSE can harness the power of files generated in genome sequencing projects to p
 
 ```
 Usage:
-  python3 MGSE3.py [--cov <COV_FILE_OR_DIR> | --bam <BAM_FILE_OR_DIR>] | --fasta <FASTA_FILE>
-		   --fastq <FASTQ_FILE_OR_DIR> --gzip_fq <SPECIFY_FOR_COMPRESSED_FASTQ_FILES>
-                   --seqtech <SEQUENCING_TECHNOLOGY>]
+  python3 MGSE3.py [--cov <COV_FILE_OR_DIR> | --bam <BAM_FILE_OR_DIR> | --fasta <FASTA_FILE>
+		   --fastq <FASTQ_FILE_OR_DIR>]
                    --out <DIR>
                    [--ref <TSV> | --gff <GFF> | --busco <FULL_TABLE.TSV> | --all]
 
 Mandatory:
   Coverage data (choose one)
-  [--cov STR                Coverage file (COV) created by construct_cov_file.py or directory containing
-                            multiple coverage files; Extension of uncompressed cov file should be .cov or
-                            or .txt; compressed file extension should be .cov.gz or.txt.gz]
-  [--bam STR                BAM file to automatically create the coverage file]
-  [--fasta STR              FASTA assembly file for read mapping
-   --fastq STR              Single FASTQ file or a directory containing FASTQ files; If you have multiple FASTQ files,
-                            It is mandatory to put them in a folder and specify the folder path; While specifying the
-                            folder path ensure that it ends with a backslash '/' since it is mandatory for the script
-                            to work correctly
-   --gzip_fq                Specify this flag if the FASTQ file(s) are compressed
-   --seqtech                Specify the sequencing technology used to obtain reads in the FASTQ file;
-                            Options are, Illumina, ONT, PacBio]
+  [--cov               STR       Coverage file (COV) created by construct_cov_file.py or directory containing
+                                 multiple coverage files]
+  [--bam               STR       BAM file to automatically create the coverage file]
+  [--fasta             STR       FASTA assembly file for read mapping
+   --fastq             STR       Single FASTQ file or a directory containing FASTQ files]
   
   Output directory
-  --out STR                 Output directory
+  --out                STR       Output directory
 
   Reference regions to calculate average coverage (choose one)
-  --ref STR                 File containing TAB-separated sequence ID, start position, and end
-                            position
-  --gff STR                 GFF3 file 
-  --busco STR               BUSCO annotation file (full_table.tsv)
-  --all                     Use all positions of the assembly
+  --ref                STR       TAB-separated file with sequence ID, start position, and end position
+  --gff                STR       GFF3 file 
+  --busco              STR       BUSCO annotation file (full_table.tsv)
+  --all                          Use all positions of the assembly
 		
 Optional:
-  --black STR               Sequence ID list for exclusion
-  --bam_is_sorted           Do not sort BAM file
-  --samtools STR            Full path to samtools (if not in your $PATH)
-  --bedtools STR            Full path to bedtools (if not in your $PATH)
-  --short_read_aligner      Full path to BWA MEM (if not in your $PATH)
-  --long_read_aligner       Full path to minimap2 (if not in your $PATH) 
-  --name STR                Prefix for output files []
-  --feature STR             Specific feature for analysis from GFF file (if other than 'gene')
-  --m INT                   Samtools sort memory [5000000000]
-  --threads INT             Samtools sort threads [4]
-  --plot BOOLEAN            Activate or deactivate generation of figures via matplotlib[FALSE]
-  --gzip                    Search for files "*cov.gz" in --cov if this is a directory
-  --black_list_factor FLOAT Specify black list factor for blacklisting of contigs
-                            with high coverage values<DEFAULT 1.5>
-  --blackoff BOOLEAN        Deactivate the black listing of contigs with high coverage values [FALSE]
+  --black              STR       Sequence ID list for exclusion
+  --samtools           STR       Full path to samtools (if not in your $PATH)
+  --bedtools           STR       Full path to bedtools (if not in your $PATH)
+  --seqtech            STR       Sequencing technology of FASTQ (illumina|ont|pacbio)[illumina]
+  --short_read_aligner STR       Full path to BWA MEM (if not in your $PATH)
+  --long_read_aligner  STR       Full path to minimap2 (if not in your $PATH) 
+  --name               STR       Prefix for output files []
+  --feature            STR       Specific feature for analysis from GFF file (if other than 'gene')
+  --m                  INT       Samtools sort memory [5000000000]
+  --threads            INT       Samtools sort threads [4]
+  --plot               BOOLEAN   Activate or deactivate generation of figures via matplotlib[FALSE]
+  --black_list_factor  FLOAT     Black list factor for blacklisting of contigs with high coverage values [1.5]
+  --blackoff           BOOLEAN   Deactivate the black listing of contigs with high coverage values [FALSE]
+  --gzip                         Search for files "*cov.gz" in --cov if this is a directory
+  --gzip_fq                      Specify this flag if the FASTQ file(s) are compressed
+  --bam_is_sorted                Do not sort BAM file
 ```
 				
 __WARNING:__
@@ -74,6 +66,14 @@ __Possible reference regions:__
 3) `--busco` This will extract the single copy BUSCOs from the provided TSV file.
 
 4) `--all` All positions of the assembly will be included in the average coverage calculation.
+
+__Important pointers:__
+
+1) '--fastq' If you have multiple FASTQ files,
+    It is mandatory to put them in a folder and specify the folder path. While specifying the folder path ensure that it ends        with a backslash '/' since it is mandatory for the script to work correctly.
+
+2) '--cov' Extension of uncompressed cov file should be .cov or .txt;
+   Compressed cov file extension should be .cov.gz or.txt.gz
 
 
 ```
@@ -100,5 +100,5 @@ Optional:
 
 ## Reference:
 
-Pucker B. Mapping-based genome size estimation. bioRxiv 607390; doi: https://doi.org/10.1101/607390
+"doi: [10.1101/607390](https://doi.org/10.1101/607390)"
 
