@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2636733.svg)](https://doi.org/10.5281/zenodo.2636733)
+[![DOI](https://zenodo.org/badge/169685011.svg)](https://doi.org/10.5281/zenodo.2636732)
 
 # Mapping-based Genome Size Estimation (MGSE)
 
