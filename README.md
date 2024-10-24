@@ -99,6 +99,5 @@ Optional:
 
 
 ## Reference:
-
-"doi: [10.1101/607390](https://doi.org/10.1101/607390)"
+Natarajan S., Gehrke J., Pucker B. (2024). Mapping-based genome size estimation. bioRxiv 607390; doi: [10.1101/607390](https://doi.org/10.1101/607390).
 
