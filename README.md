@@ -76,7 +76,7 @@ __Important pointers:__
    Compressed cov file extension should be .cov.gz or.txt.gz
 
 
-Allied scripts usage information:
+\_**Allied scripts usage information**:\_
 
 ```
 Usage:
