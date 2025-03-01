@@ -106,8 +106,7 @@ Usage:
 Mandatory:
 --in  STR	BUSCO full_table.tsv
 --out STR	Output directory
-
-
+```
 
 
 ## Reference:
