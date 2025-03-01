@@ -76,6 +76,8 @@ __Important pointers:__
    Compressed cov file extension should be .cov.gz or.txt.gz
 
 
+Allied scripts usage information:
+
 ```
 Usage:
   python2 construct_cov_file.py
