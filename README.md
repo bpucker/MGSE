@@ -46,7 +46,7 @@ Optional:
   --threads            INT       Samtools sort threads [4]
   --plot               BOOLEAN   Activate or deactivate generation of figures via matplotlib[FALSE]
   --black_list_factor  FLOAT     Black list factor for blacklisting of contigs with high coverage values [1.5]
-  --blackoff           BOOLEAN   Deactivate the black listing of contigs with high coverage values [FALSE]
+  --ignore             BOOLEAN   Deactivate the black listing of contigs with high coverage values [FALSE]
   --gzip                         Search for files "*cov.gz" in --cov if this is a directory
   --gzip_fq                      Specify this flag if the FASTQ file(s) are compressed
   --bam_is_sorted                Do not sort BAM file
@@ -54,7 +54,7 @@ Optional:
 				
 __WARNING:__
 - MGSE requires absolute paths (at least use of absolute paths is recommended)
-- Per default contigs with very high coverage values are put on a black list to prevent inflation of the genome size prediction    by plastome contigs (in plants). However, this function can be disabled via --blackoff to estimate genome sizes with more        fragmented assemblies.
+- Per default contigs with very high coverage values are put on a black list to prevent inflation of the genome size prediction    by plastome contigs (in plants). However, this function can be disabled via --ignore to estimate genome sizes with more        fragmented assemblies.
 
 
 __Possible reference regions:__
@@ -94,6 +94,16 @@ Optional:
   --bedtools STR    Full path to bedtools (if not in your $PATH)
 ```
 
+
+```
+Usage:
+  python3 busco2ploidy.py
+
+  --in <BUSCO_TSV_FILE> --out <OUTPUT_DIR>
+
+Mandatory:
+--in  STR	BUSCO full_table.tsv
+--out STR	Output directory
 
 
 
