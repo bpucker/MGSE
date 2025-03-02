@@ -66,6 +66,11 @@ __Possible reference regions:__
 3) `--busco` This will extract the single copy BUSCOs from the provided TSV file.
 
 4) `--all` All positions of the assembly will be included in the average coverage calculation.
+   
+
+__Computational resources:__
+
+MGSE can start with read files and a reference assembly or directly with BAM files. By default the script uses 4 threads to carry out each of the different computational steps involved. But to increase the efficiency, especially when giving read files for mapping as a part of MGSE's workflow, it is recommended to increase the number of threads according to the resources available to the user. For further information on runtimes and other details, please refer to our manuscript describing MGSE.
 
 __Important pointers:__
 
