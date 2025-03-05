@@ -70,7 +70,7 @@ __Possible reference regions:__
 
 __Computational resources:__
 
-MGSE can start with read files and a reference assembly or directly with BAM files. By default the script uses 4 threads to carry out each of the different computational steps involved. But to increase the efficiency, especially when giving read files for mapping as a part of MGSE's workflow, it is recommended to increase the number of threads according to the resources available to the user. For further information on runtimes and other details, please refer to our manuscript describing MGSE.
+MGSE can start with read files (FASTQ) and a reference assembly (FASTA) or directly with a read mapping (sorted BAM file). By default the script uses 4 threads to carry out each of the different computational steps involved. To increase the speed, especially when giving read files for mapping as a part of MGSE's workflow, it is recommended to increase the number of threads according to the resources available to the user. For further information on runtimes and other details, please refer to our manuscript describing MGSE.
 
 __Important pointers:__
 
