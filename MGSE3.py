@@ -175,8 +175,8 @@ def identify_cov_outlier_contigs( coverage, blf ):
 	avg_values = []
 	vals_per_contig = []
 	for key in coverage.keys():
-		coverage[key].sort()
-		avg_cov = get_median( coverage[ key ] )
+		sorted_cov = sorted( coverage[key] )
+		avg_cov = get_median( sorted_cov )
 		avg_values.append( avg_cov )
 		vals_per_contig.append( { 'key': key, 'val': avg_cov } )
 
