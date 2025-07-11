@@ -114,5 +114,5 @@ Mandatory:
 
 
 ## Reference:
-Natarajan S., Gehrke J., Pucker B. (2024). Mapping-based genome size estimation. bioRxiv 607390; doi: [10.1101/607390](https://doi.org/10.1101/607390).
+Natarajan, S., Gehrke, J. & Pucker, B. Mapping-based genome size estimation. BMC Genomics 26, 482 (2025). [10.1186/s12864-025-11640-8](https://doi.org/10.1186/s12864-025-11640-8).
 
